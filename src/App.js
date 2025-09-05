@@ -1,9 +1,10 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import ReactFlow, {
   Background,
   Controls,
   applyNodeChanges,
   applyEdgeChanges,
+  useReactFlow,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { utils, writeFile } from "xlsx";
@@ -12,18 +13,33 @@ export default function App() {
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
   const [idCount, setIdCount] = useState(1);
+  const reactFlowWrapper = useRef(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [selectedNodes, setSelectedNodes] = useState([]);
+  const { project } = useReactFlow();
 
   // tambah node baru
   const addNode = (type) => {
     const newNode = {
       id: `node-${idCount}`,
       data: { label: `${type}-${idCount}` },
-      position: { x: Math.random() * 400, y: Math.random() * 400 },
+      position: mousePos,
       type: "default",
       nodeType: type,
     };
     setNodes((nds) => [...nds, newNode]);
     setIdCount(idCount + 1);
+  };
+
+  const deleteSelectedNodes = () => {
+    setNodes((nds) => nds.filter((node) => !selectedNodes.includes(node.id)));
+    setEdges((eds) =>
+      eds.filter(
+        (edge) =>
+          !selectedNodes.includes(edge.source) &&
+          !selectedNodes.includes(edge.target)
+      )
+    );
   };
 
   // koneksi antar node
@@ -76,6 +92,15 @@ export default function App() {
           </button>
         ))}
 
+        <h2 className="font-bold text-lg mt-6">Actions</h2>
+        <button
+          className="w-full px-4 py-2 bg-red-500 text-white rounded disabled:bg-gray-400"
+          onClick={deleteSelectedNodes}
+          disabled={selectedNodes.length === 0}
+        >
+          Delete Selected
+        </button>
+
         <h2 className="font-bold text-lg mt-6">Export</h2>
         <button
           className="w-full px-4 py-2 bg-green-500 text-white rounded"
@@ -86,7 +111,18 @@ export default function App() {
       </div>
 
       {/* Canvas React Flow */}
-      <div className="flex-1 flex flex-col">
+      <div
+        className="flex-1 flex flex-col"
+        ref={reactFlowWrapper}
+        onMouseMove={(event) => {
+          const rect = reactFlowWrapper.current.getBoundingClientRect();
+          const position = project({
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top,
+          });
+          setMousePos(position);
+        }}
+      >
         <div className="flex-1 border-b">
           <ReactFlow
             nodes={nodes}
@@ -96,6 +132,9 @@ export default function App() {
             }
             onEdgesChange={(changes) =>
               setEdges((eds) => applyEdgeChanges(changes, eds))
+            }
+            onSelectionChange={({ nodes }) =>
+              setSelectedNodes(nodes.map((n) => n.id))
             }
             onConnect={onConnect}
             fitView
