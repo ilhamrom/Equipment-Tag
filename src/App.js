@@ -56,6 +56,16 @@ export default function App() {
     [cableIdCount]
   );
 
+  const onEdgeUpdate = useCallback(
+    (oldEdge, newConnection) => {
+      setEdges((els) => {
+        const newEdges = els.filter((edge) => edge.id !== oldEdge.id);
+        return [...newEdges, { ...newConnection, id: oldEdge.id, label: oldEdge.label }];
+      });
+    },
+    [setEdges]
+  );
+
   // data untuk export
   const connectionData = edges.map((e, i) => {
     const from = nodes.find((n) => n.id === e.source);
@@ -135,6 +145,7 @@ export default function App() {
             onEdgesChange={(changes) =>
               setEdges((eds) => applyEdgeChanges(changes, eds))
             }
+            onEdgeUpdate={onEdgeUpdate}
             onSelectionChange={({ nodes }) =>
               setSelectedNodes(nodes.map((n) => n.id))
             }
