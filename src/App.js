@@ -5,11 +5,9 @@ import ReactFlow, {
   applyNodeChanges,
   applyEdgeChanges,
   useReactFlow,
-  updateEdge,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { utils, writeFile } from "xlsx";
-import FourHandleNode from './FourHandleNode';
 
 export default function App() {
   const [nodes, setNodes] = useState([]);
@@ -21,15 +19,13 @@ export default function App() {
   const [selectedNodes, setSelectedNodes] = useState([]);
   const { project } = useReactFlow();
 
-  const nodeTypes = { fourHandleNode: FourHandleNode };
-
   // tambah node baru
   const addNode = (type) => {
     const newNode = {
       id: `node-${idCount}`,
       data: { label: `${type}-${idCount}` },
       position: mousePos,
-      type: 'fourHandleNode',
+      type: "default",
       nodeType: type,
     };
     setNodes((nds) => [...nds, newNode]);
@@ -47,19 +43,13 @@ export default function App() {
     );
   };
 
-  const onEdgeUpdate = useCallback(
-    (oldEdge, newConnection) =>
-      setEdges((els) => updateEdge(oldEdge, newConnection, els)),
-    []
-  );
-
   // koneksi antar node
   const onConnect = useCallback(
     (params) => {
       const cableTag = `CABLE-${cableIdCount}`;
       setEdges((eds) => [
         ...eds,
-        { ...params, id: cableTag, label: cableTag, updatable: true },
+        { ...params, id: cableTag, label: cableTag },
       ]);
       setCableIdCount(cableIdCount + 1);
     },
@@ -92,7 +82,7 @@ export default function App() {
   return (
     <div className="flex h-screen">
       {/* Sidebar kiri */}
-      <div className="w-1/6 p-4 border-r space-y-2 overflow-y-auto">
+      <div className="w-1/4 p-4 border-r space-y-2 overflow-y-auto">
         <h2 className="font-bold text-lg">Add Equipment</h2>
         {["PANEL", "JUNCTION BOX", "SWITCH", "LAMP"].map((t) => (
           <button
@@ -139,7 +129,6 @@ export default function App() {
           <ReactFlow
             nodes={nodes}
             edges={edges}
-            nodeTypes={nodeTypes}
             onNodesChange={(changes) =>
               setNodes((nds) => applyNodeChanges(changes, nds))
             }
@@ -150,8 +139,6 @@ export default function App() {
               setSelectedNodes(nodes.map((n) => n.id))
             }
             onConnect={onConnect}
-            onEdgeUpdate={onEdgeUpdate}
-            dragHandle=".custom-drag-handle"
             fitView
           >
             <Background />
