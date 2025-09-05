@@ -13,6 +13,7 @@ export default function App() {
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
   const [idCount, setIdCount] = useState(1);
+  const [cableIdCount, setCableIdCount] = useState(1);
   const reactFlowWrapper = useRef(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [selectedNodes, setSelectedNodes] = useState([]);
@@ -45,13 +46,14 @@ export default function App() {
   // koneksi antar node
   const onConnect = useCallback(
     (params) => {
-      const cableTag = `CABLE-${edges.length + 1}`;
+      const cableTag = `CABLE-${cableIdCount}`;
       setEdges((eds) => [
         ...eds,
         { ...params, id: cableTag, label: cableTag },
       ]);
+      setCableIdCount(cableIdCount + 1);
     },
-    [edges]
+    [cableIdCount]
   );
 
   // data untuk export
@@ -80,7 +82,7 @@ export default function App() {
   return (
     <div className="flex h-screen">
       {/* Sidebar kiri */}
-      <div className="w-1/4 p-4 border-r space-y-2 overflow-y-auto">
+      <div className="w-1/6 p-4 border-r space-y-2 overflow-y-auto">
         <h2 className="font-bold text-lg">Add Equipment</h2>
         {["PANEL", "JUNCTION BOX", "SWITCH", "LAMP"].map((t) => (
           <button
