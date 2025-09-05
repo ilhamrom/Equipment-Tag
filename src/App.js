@@ -17,6 +17,8 @@ export default function App() {
   const reactFlowWrapper = useRef(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [selectedNodes, setSelectedNodes] = useState([]);
+  const [selectedEdges, setSelectedEdges] = useState([]);
+  const [editValue, setEditValue] = useState("");
   const { project } = useReactFlow();
 
   // tambah node baru
@@ -41,6 +43,33 @@ export default function App() {
           !selectedNodes.includes(edge.target)
       )
     );
+  };
+
+  const onLabelChange = (newLabel) => {
+    setEditValue(newLabel);
+
+    if (selectedNodes.length === 1 && selectedEdges.length === 0) {
+      const nodeId = selectedNodes[0];
+      setNodes((nds) =>
+        nds.map((node) => {
+          if (node.id === nodeId) {
+            return { ...node, data: { ...node.data, label: newLabel } };
+          }
+          return node;
+        })
+      );
+    } else if (selectedEdges.length === 1 && selectedNodes.length === 0) {
+      const edgeId = selectedEdges[0];
+      setEdges((eds) =>
+        eds.map((edge) => {
+          if (edge.id === edgeId) {
+            return { ...edge, id: newLabel, label: newLabel };
+          }
+          return edge;
+        })
+      );
+      setSelectedEdges([newLabel]);
+    }
   };
 
   // koneksi antar node
@@ -120,6 +149,23 @@ export default function App() {
         >
           Export to Excel
         </button>
+
+        {/* edit selected */}
+        {((selectedNodes.length === 1 && selectedEdges.length === 0) ||
+          (selectedEdges.length === 1 && selectedNodes.length === 0)) && (
+          <>
+            <h2 className="font-bold text-lg mt-6">Edit Selected</h2>
+            <div className="space-y-2">
+              <label className="block">Tag Name</label>
+              <input
+                type="text"
+                className="w-full p-2 border rounded"
+                value={editValue}
+                onChange={(e) => onLabelChange(e.target.value)}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       {/* Canvas React Flow */}
@@ -146,9 +192,18 @@ export default function App() {
               setEdges((eds) => applyEdgeChanges(changes, eds))
             }
             onEdgeUpdate={onEdgeUpdate}
-            onSelectionChange={({ nodes }) =>
-              setSelectedNodes(nodes.map((n) => n.id))
-            }
+            onSelectionChange={({ nodes, edges }) => {
+              setSelectedNodes(nodes.map((n) => n.id));
+              setSelectedEdges(edges.map((e) => e.id));
+
+              if (nodes.length === 1 && edges.length === 0) {
+                setEditValue(nodes[0].data.label);
+              } else if (edges.length === 1 && nodes.length === 0) {
+                setEditValue(edges[0].label);
+              } else {
+                setEditValue("");
+              }
+            }}
             onConnect={onConnect}
             fitView
           >
